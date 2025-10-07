@@ -31,7 +31,7 @@ print("=" * 70)
 # =============================================================================
 print("\n[1] LOADING DATA...")
 
-df = pd.read_csv('data_balita.csv')
+df = pd.read_csv('dataset/data_balita.csv')
 
 print(f"    Total samples: {len(df):,} balita")
 print(f"    Total features: {len(df.columns) - 1}")
