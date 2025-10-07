@@ -151,6 +151,7 @@ with open(model_path, 'wb') as f:
     pickle.dump({
         'model': knn,
         'dt_model': dt,
+        'scaler': scaler,  # IMPORTANT: Save scaler for KNN!
         'columns': X.columns,
         'feature_names': list(X.columns)
     }, f)

@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier, export_text
 import pickle
@@ -38,11 +39,15 @@ def load_model():
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # Train KNN
-    knn = KNeighborsClassifier(n_neighbors=5)
-    knn.fit(X_train, y_train)
+    # Scale features for KNN
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
 
-    # Train Decision Tree (for interpretability)
+    # Train KNN with scaled data
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(X_train_scaled, y_train)
+
+    # Train Decision Tree (for interpretability) - uses unscaled data
     dt = DecisionTreeClassifier(
         random_state=42,
         max_depth=3  # Same as script
@@ -54,6 +59,7 @@ def load_model():
         pickle.dump({
             'model': knn,
             'dt_model': dt,
+            'scaler': scaler,  # IMPORTANT: Save scaler!
             'columns': X.columns,
             'feature_names': list(X.columns)
         }, f)
@@ -61,12 +67,14 @@ def load_model():
     return {
         'model': knn,
         'dt_model': dt,
+        'scaler': scaler,
         'columns': X.columns,
         'feature_names': list(X.columns)
     }
 
 model_data = load_model()
 model = model_data['model']
+scaler = model_data.get('scaler')  # StandardScaler for KNN
 dt_model = model_data.get('dt_model')  # Decision Tree model
 feature_names = model_data.get('feature_names', list(model_data['columns']))
 
@@ -141,9 +149,15 @@ elif menu == "🔍 Prediksi":
                 input_encoded[col] = 0
         input_encoded = input_encoded[model_data['columns']]
 
+        # Scale input for KNN (IMPORTANT!)
+        if scaler:
+            input_scaled = scaler.transform(input_encoded)
+        else:
+            input_scaled = input_encoded  # Fallback for old models
+
         # Predict
-        prediksi = model.predict(input_encoded)[0]
-        probabilitas = model.predict_proba(input_encoded)[0]
+        prediksi = model.predict(input_scaled)[0]
+        probabilitas = model.predict_proba(input_scaled)[0]
 
         pred_idx = np.where(model.classes_ == prediksi)[0][0]
         confidence = probabilitas[pred_idx]
