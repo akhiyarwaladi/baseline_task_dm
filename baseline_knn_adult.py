@@ -1,6 +1,6 @@
 """
 =============================================================================
-BASELINE KNN - INCOME PREDICTION
+BASELINE KNN & DECISION TREE - INCOME PREDICTION
 =============================================================================
 Dataset: UCI Adult Census Income (1994)
 Tujuan: Memprediksi apakah seseorang berpenghasilan >50K atau <=50K per tahun
@@ -13,6 +13,10 @@ Berguna untuk analisis ekonomi, perencanaan pajak, dan targeting marketing.
 TARGET:
 - Kelas 0 = Income <=50K (Penghasilan Rendah) - 75% populasi
 - Kelas 1 = Income >50K (Penghasilan Tinggi) - 25% populasi
+
+ALGORITMA:
+1. K-Nearest Neighbors (KNN) - Instance-based learning
+2. Decision Tree - Rule-based learning (mudah diinterpretasi!)
 =============================================================================
 """
 
@@ -21,12 +25,13 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier, export_text, export_graphviz
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import warnings
 warnings.filterwarnings('ignore')
 
 print("=" * 70)
-print("BASELINE KNN - PREDIKSI INCOME")
+print("BASELINE: KNN & DECISION TREE - PREDIKSI INCOME")
 print("=" * 70)
 
 # =============================================================================
@@ -106,8 +111,29 @@ for i, col in enumerate(categorical_cols, 1):
 # =============================================================================
 print("\n[3] PREPROCESSING")
 
-# Encode categorical variables
-print("    Encoding fitur kategorikal menjadi angka...")
+print("    📌 PENTING: Encoding Fitur Kategorikal")
+print("    - KNN: Butuh Label Encoding (karena butuh angka untuk distance)")
+print("    - Decision Tree: Butuh One-Hot Encoding (agar tidak misleading!)")
+print()
+
+# Label Encoding untuk TARGET (binary: 0/1)
+df['income_encoded'] = (df['income'] == '>50K').astype(int)
+
+# ONE-HOT ENCODING untuk Decision Tree (BENAR!)
+print("    [Decision Tree] One-Hot Encoding kategorikal...")
+print("    → Setiap kategori jadi kolom terpisah (0/1)")
+
+df_onehot = pd.get_dummies(df, columns=categorical_cols, drop_first=True, dtype=int)
+X_dt = df_onehot.drop(['income', 'income_encoded'], axis=1)
+y = df['income_encoded']
+
+print(f"    ✓ Fitur Decision Tree: {X_dt.shape[1]} kolom (dari {len(numerical_cols)} numerik + one-hot)")
+print(f"      Contoh kolom: {list(X_dt.columns[:5])}...")
+
+# LABEL ENCODING untuk KNN (untuk kompatibilitas)
+print("\n    [KNN] Label Encoding kategorikal...")
+print("    → Setiap kategori jadi angka (0, 1, 2, ...)")
+
 df_encoded = df.copy()
 label_encoders = {}
 
@@ -116,110 +142,225 @@ for col in categorical_cols:
     df_encoded[col] = le.fit_transform(df[col])
     label_encoders[col] = le
 
-# Encode target
-le_target = LabelEncoder()
-df_encoded['income'] = le_target.fit_transform(df_encoded['income'])
+X_knn = df_encoded.drop(['income', 'income_encoded'], axis=1)
 
-print("    ✓ Semua fitur kategorikal berhasil di-encode")
+print(f"    ✓ Fitur KNN: {X_knn.shape[1]} kolom")
+print()
+print("    💡 One-Hot Encoding lebih baik untuk Decision Tree karena:")
+print("       - Tidak ada asumsi urutan (Private ≠ lebih besar dari Government)")
+print("       - Setiap kategori independen")
+print("       - Interpretasi tree lebih jelas (misal: 'workclass_Self-emp-inc = 1')")
 
 # Sampling 10% untuk efisiensi (KNN lambat pada dataset besar)
 print("\n    Mengambil 10% sampel untuk efisiensi komputasi...")
-print("    (KNN lambat pada dataset besar)")
+print("    (KNN lambat pada dataset besar, Decision Tree lebih cepat)")
 
-X = df_encoded.drop('income', axis=1)
-y = df_encoded['income']
-
-X_subset, _, y_subset, _ = train_test_split(
-    X, y, train_size=0.1, random_state=42, stratify=y
+# Sampling untuk Decision Tree (One-Hot Encoding)
+X_dt_subset, _, y_dt_subset, _ = train_test_split(
+    X_dt, y, train_size=0.1, random_state=42, stratify=y
 )
-print(f"    Subset yang digunakan: {len(X_subset)} orang")
+
+# Sampling untuk KNN (Label Encoding)
+X_knn_subset, _, y_knn_subset, _ = train_test_split(
+    X_knn, y, train_size=0.1, random_state=42, stratify=y
+)
+print(f"    Subset yang digunakan: {len(X_dt_subset)} orang")
 
 # =============================================================================
 # 4. SPLIT DATA
 # =============================================================================
 print("\n[4] SPLIT DATA (80% training, 20% testing)")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X_subset, y_subset, test_size=0.2, random_state=42, stratify=y_subset
+# Split untuk Decision Tree
+X_dt_train, X_dt_test, y_dt_train, y_dt_test = train_test_split(
+    X_dt_subset, y_dt_subset, test_size=0.2, random_state=42, stratify=y_dt_subset
 )
 
-print(f"    Training set: {len(X_train)} orang")
-print(f"    Testing set:  {len(X_test)} orang")
+# Split untuk KNN
+X_knn_train, X_knn_test, y_knn_train, y_knn_test = train_test_split(
+    X_knn_subset, y_knn_subset, test_size=0.2, random_state=42, stratify=y_knn_subset
+)
 
-# Standardization
-print("\n    Standardisasi fitur (penting untuk KNN!)")
+print(f"    Training set: {len(X_dt_train)} orang")
+print(f"    Testing set:  {len(X_dt_test)} orang")
+
+# Standardization (hanya untuk KNN)
+print("\n    Standardisasi fitur untuk KNN (tidak perlu untuk Decision Tree)")
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+X_knn_train_scaled = scaler.fit_transform(X_knn_train)
+X_knn_test_scaled = scaler.transform(X_knn_test)
 
 # =============================================================================
 # 5. TRAINING MODEL KNN
 # =============================================================================
-print("\n[5] TRAINING MODEL")
+print("\n[5] TRAINING MODEL - K-NEAREST NEIGHBORS (KNN)")
 
-k = 5  # Jumlah tetangga terdekat
+k = 5
 knn = KNeighborsClassifier(n_neighbors=k, metric='euclidean', n_jobs=-1)
-knn.fit(X_train_scaled, y_train)
+knn.fit(X_knn_train_scaled, y_knn_train)
 
-print(f"    Algoritma: K-Nearest Neighbors (KNN)")
-print(f"    K = {k} (menggunakan 5 tetangga terdekat)")
+print(f"    Algoritma: K-Nearest Neighbors")
+print(f"    K = {k} tetangga terdekat")
 print(f"    Distance metric: Euclidean")
 
-# =============================================================================
-# 6. EVALUASI MODEL
-# =============================================================================
-print("\n[6] EVALUASI MODEL")
+# Evaluasi KNN
+y_pred_knn = knn.predict(X_knn_test_scaled)
+accuracy_knn = accuracy_score(y_knn_test, y_pred_knn)
+print(f"\n    ✓ KNN Accuracy: {accuracy_knn:.4f} ({accuracy_knn*100:.2f}%)")
 
-# Prediksi
-y_pred = knn.predict(X_test_scaled)
+# =============================================================================
+# 6. TRAINING MODEL DECISION TREE
+# =============================================================================
+print("\n[6] TRAINING MODEL - DECISION TREE")
 
-# Accuracy
-accuracy = accuracy_score(y_test, y_pred)
-print(f"\n    Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+# Limit depth agar tree mudah dibaca
+dt = DecisionTreeClassifier(max_depth=5, random_state=42, min_samples_split=50)
+dt.fit(X_dt_train, y_dt_train)  # Decision Tree tidak perlu scaling!
+
+print(f"    Algoritma: Decision Tree (CART)")
+print(f"    Max depth: 5 (dibatasi agar mudah dibaca)")
+print(f"    Min samples split: 50")
+print(f"    Criterion: Gini impurity")
+
+# Evaluasi Decision Tree
+y_pred_dt = dt.predict(X_dt_test)
+accuracy_dt = accuracy_score(y_dt_test, y_pred_dt)
+print(f"\n    ✓ Decision Tree Accuracy: {accuracy_dt:.4f} ({accuracy_dt*100:.2f}%)")
+
+# =============================================================================
+# 7. PERBANDINGAN MODEL
+# =============================================================================
+print("\n[7] PERBANDINGAN KNN vs DECISION TREE")
+
+print(f"\n    {'Metric':<20} {'KNN':>15} {'Decision Tree':>15}")
+print(f"    {'-'*20} {'-'*15} {'-'*15}")
+print(f"    {'Accuracy':<20} {accuracy_knn:>15.4f} {accuracy_dt:>15.4f}")
 
 # Confusion Matrix
-print(f"\n    Confusion Matrix:")
-cm = confusion_matrix(y_test, y_pred)
-print(f"    {cm}")
+cm_knn = confusion_matrix(y_knn_test, y_pred_knn)
+cm_dt = confusion_matrix(y_dt_test, y_pred_dt)
+
+print(f"\n    Confusion Matrix - KNN:")
+print(f"    {cm_knn}")
+
+print(f"\n    Confusion Matrix - Decision Tree:")
+print(f"    {cm_dt}")
 
 # Classification Report
-print(f"\n    Classification Report:")
-print(classification_report(y_test, y_pred,
-                          target_names=['Kelas 0: <=50K', 'Kelas 1: >50K']))
+print(f"\n    Classification Report - KNN:")
+print(classification_report(y_knn_test, y_pred_knn,
+                          target_names=['<=50K', '>50K'], digits=3))
 
-# Cross-Validation (3-fold untuk efisiensi)
-cv_scores = cross_val_score(knn, X_train_scaled, y_train, cv=3, n_jobs=-1)
-print(f"    3-Fold Cross-Validation:")
-print(f"    - CV Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std()*2:.4f})")
-
-# =============================================================================
-# 7. EKSPERIMEN DENGAN BERBAGAI NILAI K
-# =============================================================================
-print("\n[7] EKSPERIMEN NILAI K")
-print("    Mencoba berbagai nilai K untuk menemukan yang terbaik:\n")
-
-k_values = [3, 5, 7, 9, 11]
-k_scores = []
-
-for k_val in k_values:
-    knn_temp = KNeighborsClassifier(n_neighbors=k_val, n_jobs=-1)
-    knn_temp.fit(X_train_scaled, y_train)
-    score = knn_temp.score(X_test_scaled, y_test)
-    k_scores.append(score)
-    print(f"    K = {k_val:2d}  →  Accuracy = {score:.4f}")
-
-best_k = k_values[np.argmax(k_scores)]
-best_score = max(k_scores)
-print(f"\n    ✓ Nilai K terbaik: {best_k} dengan accuracy {best_score:.4f}")
+print(f"\n    Classification Report - Decision Tree:")
+print(classification_report(y_dt_test, y_pred_dt,
+                          target_names=['<=50K', '>50K'], digits=3))
 
 # =============================================================================
-# 8. PREDIKSI PROFIL BARU (SIMULASI)
+# 8. VISUALISASI DECISION TREE (TEXT FORMAT)
 # =============================================================================
 print("\n" + "=" * 70)
-print("[8] PREDIKSI PROFIL BARU - SIMULASI ANALISIS DEMOGRAFI")
+print("[8] VISUALISASI DECISION TREE - RULES YANG MUDAH DIBACA")
 print("=" * 70)
 
-# Profil orang baru (data raw sebelum encoding)
+# Export tree sebagai text
+tree_rules = export_text(dt, feature_names=list(X_dt.columns),
+                        max_depth=3, show_weights=True)
+
+print("\n    DECISION TREE RULES (3 level pertama):")
+print("    " + "=" * 66)
+print()
+
+# Parse dan format tree rules agar lebih readable
+for line in tree_rules.split('\n')[:40]:  # Ambil 40 baris pertama
+    if line.strip():
+        print(f"    {line}")
+
+print()
+print("    " + "=" * 66)
+print("    📌 Cara Membaca:")
+print("    - <= : kurang dari atau sama dengan")
+print("    - >  : lebih dari")
+print("    - class: prediksi (0=<=50K, 1=>50K)")
+print("    - weights: [jumlah <=50K, jumlah >50K] di node tersebut")
+print()
+print("    💡 One-Hot Encoding:")
+print("    - Kolom seperti 'workclass_Private' = 1 artinya jenis pekerjaan adalah Private")
+print("    - Kolom seperti 'sex_Male' = 1 artinya jenis kelamin adalah Male")
+
+# =============================================================================
+# 8B. EXPORT GRAPHVIZ (VISUALISASI GRAFIS)
+# =============================================================================
+print("\n" + "=" * 70)
+print("[8B] EXPORT DECISION TREE KE GRAPHVIZ (Visualisasi Grafis)")
+print("=" * 70)
+
+# Export ke file .dot (gunakan nama kolom asli dari One-Hot Encoding)
+dot_file = 'decision_tree_income.dot'
+export_graphviz(
+    dt,
+    out_file=dot_file,
+    feature_names=list(X_dt.columns),
+    class_names=['Income_<=50K', 'Income_>50K'],
+    filled=True,           # Warna berdasarkan class
+    rounded=True,          # Node dengan sudut rounded
+    special_characters=True,
+    max_depth=3,           # Limit depth agar tidak terlalu kompleks
+    impurity=False,        # Tidak tampilkan gini (agar lebih simple)
+    proportion=True        # Tampilkan proporsi samples
+)
+
+print(f"\n    ✓ Decision Tree berhasil di-export ke: {dot_file}")
+print(f"\n    📊 Cara Membuat Visualisasi Grafis:")
+print(f"    ")
+print(f"    1. Install Graphviz (jika belum):")
+print(f"       Ubuntu/Debian: sudo apt-get install graphviz")
+print(f"       MacOS:         brew install graphviz")
+print(f"       Windows:       Download dari graphviz.org")
+print(f"    ")
+print(f"    2. Convert .dot ke PNG:")
+print(f"       dot -Tpng {dot_file} -o decision_tree_income.png")
+print(f"    ")
+print(f"    3. Atau online: https://dreampuf.github.io/GraphvizOnline/")
+print(f"       → Copy isi file {dot_file} ke website tersebut")
+
+# Coba generate PNG jika graphviz tersedia
+try:
+    import subprocess
+    result = subprocess.run(['dot', '-Tpng', dot_file, '-o', 'decision_tree_income.png'],
+                          capture_output=True, timeout=10)
+    if result.returncode == 0:
+        print(f"\n    ✓ PNG berhasil dibuat: decision_tree_income.png")
+        print(f"    Buka file PNG untuk melihat visualisasi tree!")
+    else:
+        print(f"\n    ℹ️  Graphviz belum terinstall. Gunakan cara manual di atas.")
+except (FileNotFoundError, subprocess.TimeoutExpired):
+    print(f"\n    ℹ️  Graphviz belum terinstall. Gunakan cara manual di atas.")
+
+# Feature Importance
+print("\n" + "=" * 70)
+print("[9] FEATURE IMPORTANCE (Top 10)")
+print("    Fitur mana yang paling penting untuk prediksi?\n")
+
+importances = dt.feature_importances_
+feature_importance = pd.DataFrame({
+    'Feature': X_dt.columns,
+    'Importance': importances
+}).sort_values('Importance', ascending=False)
+
+for idx, row in feature_importance.head(10).iterrows():
+    feat = row['Feature']
+    imp = row['Importance']
+    bar = '█' * int(imp * 50)
+    print(f"    {feat:30s} {bar} {imp:.4f}")
+
+# =============================================================================
+# 10. PREDIKSI DATA BARU DENGAN KEDUA MODEL
+# =============================================================================
+print("\n" + "=" * 70)
+print("[10] PREDIKSI PROFIL BARU - PERBANDINGAN KNN vs DECISION TREE")
+print("=" * 70)
+
+# Profil orang baru
 profil_raw = {
     'age': 45, 'workclass': 'Private', 'fnlwgt': 200000,
     'education': 'Masters', 'education-num': 14,
@@ -238,33 +379,83 @@ print(f"    - Jam Kerja: {profil_raw['hours-per-week']} jam/minggu")
 print(f"    - Status: {profil_raw['marital-status']}")
 print(f"    - Capital Gain: ${profil_raw['capital-gain']}")
 
-# Encode profil baru
+# Encode profil baru untuk KNN (Label Encoding)
 profil_df = pd.DataFrame([profil_raw])
-profil_encoded = profil_df.copy()
+profil_knn = profil_df.copy()
 
 for col in categorical_cols:
-    profil_encoded[col] = label_encoders[col].transform(profil_df[col])
+    profil_knn[col] = label_encoders[col].transform(profil_df[col])
 
-profil_encoded = profil_encoded[X.columns]
+profil_knn = profil_knn[X_knn.columns]
 
-# Standardisasi dan prediksi
-profil_scaled = scaler.transform(profil_encoded)
-prediksi = knn.predict(profil_scaled)[0]
-probabilitas = knn.predict_proba(profil_scaled)[0]
+# Prediksi dengan KNN
+profil_knn_scaled = scaler.transform(profil_knn)
+prediksi_knn = knn.predict(profil_knn_scaled)[0]
+prob_knn = knn.predict_proba(profil_knn_scaled)[0]
+
+# Encode profil baru untuk Decision Tree (One-Hot Encoding)
+profil_dt = pd.get_dummies(profil_df, columns=categorical_cols, drop_first=True, dtype=int)
+
+# Pastikan semua kolom sama dengan X_dt
+for col in X_dt.columns:
+    if col not in profil_dt.columns:
+        profil_dt[col] = 0
+
+profil_dt = profil_dt[X_dt.columns]
+
+# Prediksi dengan Decision Tree
+prediksi_dt = dt.predict(profil_dt)[0]
+prob_dt = dt.predict_proba(profil_dt)[0]
 
 # Hasil
-hasil = "INCOME >50K (Tinggi)" if prediksi == 1 else "INCOME <=50K (Rendah)"
-print(f"\n    ╔════════════════════════════════════════════╗")
-print(f"    ║  HASIL PREDIKSI: {hasil:22s} ║")
-print(f"    ╚════════════════════════════════════════════╝")
-print(f"\n    Probabilitas:")
-print(f"    - Income <=50K (Rendah): {probabilitas[0]:.2%}")
-print(f"    - Income >50K (Tinggi):  {probabilitas[1]:.2%}")
+print("\n    " + "=" * 66)
+print("    HASIL PREDIKSI:")
+print("    " + "=" * 66)
 
-print("\n    💡 Model berguna untuk analisis demografis dan perencanaan ekonomi")
+hasil_knn = "INCOME >50K (Tinggi)" if prediksi_knn == 1 else "INCOME <=50K (Rendah)"
+hasil_dt = "INCOME >50K (Tinggi)" if prediksi_dt == 1 else "INCOME <=50K (Rendah)"
+
+print(f"\n    🔹 K-NEAREST NEIGHBORS (KNN):")
+print(f"       Prediksi: {hasil_knn}")
+print(f"       Probabilitas: <=50K={prob_knn[0]:.2%}, >50K={prob_knn[1]:.2%}")
+
+print(f"\n    🔹 DECISION TREE:")
+print(f"       Prediksi: {hasil_dt}")
+print(f"       Probabilitas: <=50K={prob_dt[0]:.2%}, >50K={prob_dt[1]:.2%}")
+
+# Decision Path untuk Decision Tree
+print("\n    📋 DECISION PATH (Bagaimana Decision Tree memutuskan?):")
+print("    " + "-" * 66)
+
+decision_path = dt.decision_path(profil_dt)
+node_indicator = decision_path.toarray()[0]
+leaf_id = dt.apply(profil_dt)[0]
+
+feature = dt.tree_.feature
+threshold = dt.tree_.threshold
+
+print()
+for node_id in range(len(node_indicator)):
+    if node_indicator[node_id]:
+        if leaf_id == node_id:
+            print(f"    → Sampai di LEAF NODE → Prediksi: {hasil_dt}")
+        else:
+            feat_name = X_dt.columns[feature[node_id]]
+            feat_value = profil_dt[feat_name].values[0]
+            thresh = threshold[node_id]
+
+            if feat_value <= thresh:
+                direction = f"<= {thresh:.2f}"
+                print(f"    → {feat_name} = {feat_value:.2f} {direction} ✓")
+            else:
+                direction = f"> {thresh:.2f}"
+                print(f"    → {feat_name} = {feat_value:.2f} {direction} ✓")
 
 print("\n" + "=" * 70)
 print("SELESAI")
-print(f"Catatan: Analisis ini menggunakan 10% subset data untuk efisiensi.")
-print(f"Untuk dataset besar, pertimbangkan algoritma lain (Decision Tree, etc.)")
+print(f"\n💡 INSIGHTS:")
+print(f"   - Decision Tree lebih mudah diinterpretasi (bisa lihat rules)")
+print(f"   - KNN lebih flexible tapi sulit dijelaskan (black box)")
+print(f"   - Decision Tree lebih cepat untuk dataset besar")
+print(f"   - Pilih model berdasarkan trade-off interpretability vs accuracy")
 print("=" * 70)

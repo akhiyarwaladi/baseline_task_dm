@@ -19,3 +19,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated visualizations (keep .dot, ignore .png)
+*.png
+# Keep the DOT file as example
+!decision_tree_income.dot
