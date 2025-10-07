@@ -23,8 +23,10 @@ menu = create_sidebar_menu()
 # Load or train model
 @st.cache_resource
 def load_model():
-    if os.path.exists('model_stunting.pkl'):
-        with open('model_stunting.pkl', 'rb') as f:
+    model_path = 'models/01_model_stunting.pkl'
+
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as f:
             return pickle.load(f)
 
     df = pd.read_csv('dataset/01_stunting_balita.csv')
@@ -38,7 +40,8 @@ def load_model():
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
 
-    with open('model_stunting.pkl', 'wb') as f:
+    os.makedirs('models', exist_ok=True)
+    with open(model_path, 'wb') as f:
         pickle.dump({'model': knn, 'columns': X.columns}, f)
 
     return {'model': knn, 'columns': X.columns}

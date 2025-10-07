@@ -24,8 +24,10 @@ menu = create_sidebar_menu()
 # Load or train model
 @st.cache_resource
 def load_model():
-    if os.path.exists('model_emotion.pkl'):
-        with open('model_emotion.pkl', 'rb') as f:
+    model_path = 'models/03_model_emotion.pkl'
+
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as f:
             return pickle.load(f)
 
     df = pd.read_csv('dataset/03_tokopedia_emotion.csv').dropna(subset=['Customer Review', 'Emotion'])
@@ -41,7 +43,8 @@ def load_model():
     knn = KNeighborsClassifier(n_neighbors=7, metric='cosine', weights='distance')
     knn.fit(X_train_tfidf, y_train)
 
-    with open('model_emotion.pkl', 'wb') as f:
+    os.makedirs('models', exist_ok=True)
+    with open(model_path, 'wb') as f:
         pickle.dump({'model': knn, 'vectorizer': vectorizer}, f)
 
     return {'model': knn, 'vectorizer': vectorizer}

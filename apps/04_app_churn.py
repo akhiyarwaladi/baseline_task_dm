@@ -24,8 +24,10 @@ menu = create_sidebar_menu()
 # Load or train model
 @st.cache_resource
 def load_model():
-    if os.path.exists('model_churn.pkl'):
-        with open('model_churn.pkl', 'rb') as f:
+    model_path = 'models/04_model_churn.pkl'
+
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as f:
             return pickle.load(f)
 
     df = pd.read_csv('dataset/04_ecommerce_churn.csv')
@@ -58,7 +60,8 @@ def load_model():
     knn = KNeighborsClassifier(n_neighbors=9, metric='euclidean', weights='distance')
     knn.fit(X_train_scaled, y_train)
 
-    with open('model_churn.pkl', 'wb') as f:
+    os.makedirs('models', exist_ok=True)
+    with open(model_path, 'wb') as f:
         pickle.dump({
             'model': knn,
             'scaler': scaler,
