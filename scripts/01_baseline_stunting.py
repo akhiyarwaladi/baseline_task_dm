@@ -13,7 +13,11 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import sys
-sys.path.append('..')
+import os
+# Add parent directory to path to import utils
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
 from utils import print_header, evaluate_classification, print_dataset_info
 import warnings
 warnings.filterwarnings('ignore')
@@ -21,7 +25,7 @@ warnings.filterwarnings('ignore')
 print_header("BASELINE MODEL - DETEKSI STUNTING BALITA", level=1)
 
 # Load data
-df = pd.read_csv('../dataset/01_stunting_balita.csv')
+df = pd.read_csv(os.path.join(parent_dir, 'dataset', '01_stunting_balita.csv'))
 target_col = 'Status Gizi' if 'Status Gizi' in df.columns else 'status'
 print_dataset_info(df, target_col)
 

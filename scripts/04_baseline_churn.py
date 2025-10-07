@@ -11,7 +11,11 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import roc_auc_score
 import sys
-sys.path.append('..')
+import os
+# Add parent directory to path to import utils
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
 from utils import print_header, evaluate_classification, print_dataset_info
 import warnings
 warnings.filterwarnings('ignore')
@@ -19,7 +23,8 @@ warnings.filterwarnings('ignore')
 print_header("BASELINE KNN - CUSTOMER CHURN PREDICTION", level=1)
 
 # Load data
-df = pd.read_csv('../dataset/04_ecommerce_churn.csv')
+dataset_path = os.path.join(parent_dir, 'dataset', '04_ecommerce_churn.csv')
+df = pd.read_csv(dataset_path)
 print_dataset_info(df, 'Churn')
 
 # Preprocessing

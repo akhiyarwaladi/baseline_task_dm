@@ -10,7 +10,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 import sys
-sys.path.append('..')
+import os
+# Add parent directory to path to import utils
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
 from utils import print_header, evaluate_classification, print_dataset_info
 import warnings
 warnings.filterwarnings('ignore')
@@ -18,7 +22,7 @@ warnings.filterwarnings('ignore')
 print_header("BASELINE KNN - SMS SPAM DETECTION", level=1)
 
 # Load data
-df = pd.read_csv('../dataset/02_sms_spam.csv')
+df = pd.read_csv(os.path.join(parent_dir, 'dataset', '02_sms_spam.csv'))
 print_dataset_info(df, 'label')
 
 # Show examples
