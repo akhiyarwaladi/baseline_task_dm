@@ -9,7 +9,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.metrics import roc_auc_score
+import matplotlib.pyplot as plt
 import sys
 import os
 # Add parent directory to path to import utils
@@ -70,14 +72,16 @@ X_test_scaled = scaler.transform(X_test)
 
 print(f"Training: {len(X_train):,} | Testing: {len(X_test):,}")
 
-# Train KNN
-print_header("MODEL: K-NEAREST NEIGHBORS", level=1)
+# ============================================================================
+# MODEL 1: K-NEAREST NEIGHBORS
+# ============================================================================
+print_header("MODEL 1: K-NEAREST NEIGHBORS", level=1)
 knn = KNeighborsClassifier(n_neighbors=9, metric='euclidean', weights='distance')
 knn.fit(X_train_scaled, y_train)
 
 class_names = ['No Churn', 'Churn']
-results = evaluate_classification(knn, X_train_scaled, X_test_scaled,
-                                 y_train, y_test, class_names)
+knn_results = evaluate_classification(knn, X_train_scaled, X_test_scaled,
+                                      y_train, y_test, class_names)
 
 # ROC-AUC Score (important for imbalanced data)
 y_pred_proba = knn.predict_proba(X_test_scaled)[:, 1]
@@ -86,17 +90,92 @@ roc_auc = roc_auc_score(y_test, y_pred_proba)
 print_header("ROC-AUC Score", level=2)
 print(f"ROC-AUC: {roc_auc:.4f}")
 
-# Feature importance analysis
-print_header("TOP 10 IMPORTANT FEATURES", level=1)
+# ============================================================================
+# MODEL 2: DECISION TREE
+# ============================================================================
+print_header("MODEL 2: DECISION TREE", level=1)
 
-# Calculate feature importance using correlation with target
+dt = DecisionTreeClassifier(
+    max_depth=4,
+    min_samples_split=50,
+    min_samples_leaf=20,
+    random_state=42
+)
+dt.fit(X_train, y_train)  # Use unscaled data for tree
+
+dt_results = evaluate_classification(dt, X_train, X_test, y_train, y_test, class_names)
+
+# Feature importance from Decision Tree
+print_header("Top 10 Important Features (from Decision Tree)", level=2)
 feature_importance = pd.DataFrame({
     'feature': X.columns,
-    'importance': np.abs([df[col].corr(y) for col in X.columns])
+    'importance': dt.feature_importances_
 }).sort_values('importance', ascending=False).head(10)
 
-for i, row in feature_importance.iterrows():
+for _, row in feature_importance.iterrows():
     print(f"{row['feature'][:30].ljust(30)} : {row['importance']:.4f}")
+
+# ============================================================================
+# DECISION TREE VISUALIZATION - TEXT
+# ============================================================================
+print_header("DECISION TREE VISUALIZATION - TEXT", level=1)
+
+# Class mapping
+print_header("Class Mapping", level=2)
+for idx, class_name in enumerate(class_names):
+    count = (y == class_name).sum()
+    print(f"[{idx}] = {class_name[:25].ljust(25)} ({count:,} samples)")
+
+# Tree rules
+tree_rules = export_text(dt, feature_names=list(X.columns), show_weights=True)
+print_header("Tree Rules", level=2)
+
+for line in tree_rules.split('\n'):
+    if line.strip():
+        if 'weights:' in line and 'class:' in line:
+            class_name = line.split('class:')[1].strip()
+            base_line = line.split('class:')[0] + f'class: {class_name}'
+            print(f"{base_line}")
+
+            weights_str = line.split('weights:')[1].split('class:')[0].strip()
+            weights = eval(weights_str)
+
+            breakdown = " → " + ", ".join([f"{cls}={int(w)}" for w, cls in zip(weights, class_names) if w > 0])
+            indent = len(line.split('|---')[0]) + 4 if '|---' in line else 4
+            print(f"{' ' * indent}{breakdown}")
+        else:
+            print(f"{line}")
+
+# ============================================================================
+# DECISION TREE VISUALIZATION - PNG
+# ============================================================================
+print_header("DECISION TREE VISUALIZATION - PNG", level=1)
+
+fig, ax = plt.subplots(figsize=(20, 12))
+plot_tree(dt, feature_names=list(X.columns), class_names=class_names,
+         filled=True, rounded=True, fontsize=10, ax=ax,
+         impurity=False, proportion=True)
+plt.title('Decision Tree - Customer Churn Prediction (Max Depth = 4)',
+         fontsize=16, fontweight='bold', pad=20)
+plt.tight_layout()
+
+output_file = 'decision_tree_churn.png'
+plt.savefig(output_file, dpi=300, bbox_inches='tight', facecolor='white')
+print(f"Saved: {output_file} (300 DPI)")
+
+# ============================================================================
+# MODEL COMPARISON
+# ============================================================================
+print_header("MODEL COMPARISON", level=1)
+
+print(f"{'Model':<20} {'Accuracy':<12} {'CV Score':<12} {'ROC-AUC':<12}")
+print(f"{'-'*56}")
+print(f"{'KNN (K=9)':<20} {knn_results['test_accuracy']:.4f}       {knn_results['cv_mean']:.4f}       {roc_auc:.4f}")
+print(f"{'Decision Tree':<20} {dt_results['test_accuracy']:.4f}       {dt_results['cv_mean']:.4f}       N/A")
+
+best_model = "KNN" if knn_results['test_accuracy'] > dt_results['test_accuracy'] else "Decision Tree"
+print(f"\nBest Model (Accuracy): {best_model}")
+print(f"Best Model (ROC-AUC): KNN ({roc_auc:.4f})")
 
 # Prediction examples
 print_header("CHURN RISK CLASSIFICATION", level=1)
@@ -119,7 +198,3 @@ for idx in test_indices:
               f"Complain: {X_test.iloc[idx]['Complain']:.0f} | "
               f"Satisfaction: {X_test.iloc[idx]['SatisfactionScore']:.0f}")
 
-print_header("Model Summary", level=1)
-print(f"Accuracy    : {results['test_accuracy']:.4f}")
-print(f"ROC-AUC     : {roc_auc:.4f}")
-print(f"CV Score    : {results['cv_mean']:.4f}")
