@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier, export_text
 import pickle
 import os
 from app_utils import create_sidebar_menu, display_metrics, display_footer, create_prediction_button
@@ -37,17 +38,37 @@ def load_model():
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
+    # Train KNN
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
 
+    # Train Decision Tree (for interpretability)
+    dt = DecisionTreeClassifier(
+        random_state=42,
+        max_depth=3  # Same as script
+    )
+    dt.fit(X_train, y_train)
+
     os.makedirs('models', exist_ok=True)
     with open(model_path, 'wb') as f:
-        pickle.dump({'model': knn, 'columns': X.columns}, f)
+        pickle.dump({
+            'model': knn,
+            'dt_model': dt,
+            'columns': X.columns,
+            'feature_names': list(X.columns)
+        }, f)
 
-    return {'model': knn, 'columns': X.columns}
+    return {
+        'model': knn,
+        'dt_model': dt,
+        'columns': X.columns,
+        'feature_names': list(X.columns)
+    }
 
 model_data = load_model()
 model = model_data['model']
+dt_model = model_data.get('dt_model')  # Decision Tree model
+feature_names = model_data.get('feature_names', list(model_data['columns']))
 
 # Status info
 STATUS_INFO = {
@@ -214,6 +235,45 @@ elif menu == "📈 Model Info":
 
     with col2:
         st.bar_chart(status_counts)
+
+    st.markdown("---")
+    st.subheader("🌳 Decision Tree Model (Interpretable)")
+
+    if dt_model:
+        st.write("""
+        **Model Alternatif:** Decision Tree dengan max_depth=3
+
+        Decision Tree lebih mudah diinterpretasi dibanding KNN, cocok untuk:
+        - Memahami faktor-faktor stunting
+        - Menjelaskan keputusan ke tenaga medis
+        - Mendapatkan insights actionable
+        """)
+
+        # Generate tree rules
+        tree_rules = export_text(
+            dt_model,
+            feature_names=feature_names,
+            max_depth=3,
+            decimals=2,
+            show_weights=True
+        )
+
+        st.markdown("**📊 Decision Tree Rules:**")
+
+        # Display tree rules - always visible
+        st.code(tree_rules, language='text')
+
+        st.info("""
+        **💡 Cara Membaca:**
+        - Setiap `|---` adalah decision node (keputusan)
+        - `class:` menunjukkan status gizi yang diprediksi
+        - `weights:` menunjukkan jumlah samples di node tersebut
+
+        **Contoh interpretasi:**
+        "Jika Tinggi Badan <= X DAN Umur <= Y → Predicted: Stunted"
+        """)
+    else:
+        st.warning("⚠️ Decision Tree model belum tersedia. Retrain model untuk mendapatkan Decision Tree.")
 
     st.markdown("---")
     st.subheader("🎯 Cara Penggunaan")
