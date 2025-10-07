@@ -13,13 +13,10 @@ baseline_task/
 │   └── 04_app_churn.py            # Dashboard customer churn
 │
 ├── scripts/                        # Baseline training scripts
-│   ├── 01_baseline_adult.py       # Adult income prediction
-│   ├── 02_baseline_heart_disease.py
-│   ├── 03_baseline_wine.py
-│   ├── 04_baseline_stunting.py    # Stunting detection
-│   ├── 05_baseline_sms_spam.py    # SMS spam classification
-│   ├── 06_baseline_emotion.py     # Emotion classification
-│   └── 07_baseline_churn.py       # Customer churn prediction
+│   ├── 01_baseline_stunting.py    # Stunting detection
+│   ├── 02_baseline_sms_spam.py    # SMS spam classification
+│   ├── 03_baseline_emotion.py     # Emotion classification
+│   └── 04_baseline_churn.py       # Customer churn prediction
 │
 ├── dataset/                        # Clean datasets
 │   ├── 01_stunting_balita.csv     # 120K balita (3.2MB)
@@ -44,10 +41,10 @@ pip install -r requirements.txt
 ### 2. Run Baseline Training
 ```bash
 # Training & evaluation
-python scripts/04_baseline_stunting.py
-python scripts/05_baseline_sms_spam.py
-python scripts/06_baseline_emotion.py
-python scripts/07_baseline_churn.py
+python scripts/01_baseline_stunting.py
+python scripts/02_baseline_sms_spam.py
+python scripts/03_baseline_emotion.py
+python scripts/04_baseline_churn.py
 ```
 
 ### 3. Run Streamlit Dashboard
