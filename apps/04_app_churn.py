@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier, export_text
 import pickle
 import os
 from app_utils import create_sidebar_menu, display_metrics, display_footer, create_prediction_button
@@ -57,24 +58,45 @@ def load_model():
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
+    # Train KNN
     knn = KNeighborsClassifier(n_neighbors=9, metric='euclidean', weights='distance')
     knn.fit(X_train_scaled, y_train)
+
+    # Train Decision Tree (for interpretability)
+    dt = DecisionTreeClassifier(
+        max_depth=4,  # Limit depth for interpretability
+        min_samples_split=50,
+        min_samples_leaf=20,
+        random_state=42
+    )
+    dt.fit(X_train, y_train)  # Use unscaled data for tree
 
     os.makedirs('models', exist_ok=True)
     with open(model_path, 'wb') as f:
         pickle.dump({
             'model': knn,
+            'dt_model': dt,
             'scaler': scaler,
             'encoders': label_encoders,
-            'columns': X.columns
+            'columns': X.columns,
+            'feature_names': list(X.columns)
         }, f)
 
-    return {'model': knn, 'scaler': scaler, 'encoders': label_encoders, 'columns': X.columns}
+    return {
+        'model': knn,
+        'dt_model': dt,
+        'scaler': scaler,
+        'encoders': label_encoders,
+        'columns': X.columns,
+        'feature_names': list(X.columns)
+    }
 
 model_data = load_model()
 model = model_data['model']
+dt_model = model_data.get('dt_model')  # Decision Tree model
 scaler = model_data['scaler']
 encoders = model_data['encoders']
+feature_names = model_data.get('feature_names', list(model_data['columns']))
 
 # HOME
 if menu == "🏠 Home":
@@ -286,6 +308,46 @@ elif menu == "📈 Model Info":
             'Jumlah': [churn_counts.get(0, 0), churn_counts.get(1, 0)]
         }).set_index('Status')
         st.bar_chart(chart_data)
+
+    st.markdown("---")
+    st.subheader("🌳 Decision Tree Model (Interpretable)")
+
+    if dt_model:
+        st.write("""
+        **Model Alternatif:** Decision Tree dengan max_depth=4
+
+        Decision Tree lebih mudah diinterpretasi dibanding KNN, cocok untuk:
+        - Memahami faktor-faktor churn
+        - Menjelaskan keputusan ke business team
+        - Mendapatkan insights actionable
+        """)
+
+        st.markdown("**📊 Decision Tree Rules:**")
+
+        # Generate tree rules
+        tree_rules = export_text(
+            dt_model,
+            feature_names=feature_names,
+            max_depth=4,
+            decimals=2,
+            show_weights=True
+        )
+
+        # Display in code block for better formatting
+        with st.expander("🔍 Lihat Decision Tree Rules (Klik untuk expand)", expanded=False):
+            st.code(tree_rules, language='text')
+
+        st.info("""
+        **💡 Cara Membaca:**
+        - Setiap `|---` adalah decision node (keputusan)
+        - Angka di akhir `class: 0` = No Churn, `class: 1` = Churn
+        - `weights:` menunjukkan jumlah samples di node tersebut
+
+        **Contoh interpretasi:**
+        "Jika Complain = 1 DAN Tenure <= 5 bulan → HIGH RISK CHURN"
+        """)
+    else:
+        st.warning("⚠️ Decision Tree model belum tersedia. Retrain model untuk mendapatkan Decision Tree.")
 
     st.markdown("---")
     st.subheader("🎯 Top 5 Fitur Penting")
