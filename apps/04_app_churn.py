@@ -322,8 +322,6 @@ elif menu == "📈 Model Info":
         - Mendapatkan insights actionable
         """)
 
-        st.markdown("**📊 Decision Tree Rules:**")
-
         # Generate tree rules
         tree_rules = export_text(
             dt_model,
@@ -333,9 +331,10 @@ elif menu == "📈 Model Info":
             show_weights=True
         )
 
-        # Display in code block for better formatting
-        with st.expander("🔍 Lihat Decision Tree Rules (Klik untuk expand)", expanded=False):
-            st.code(tree_rules, language='text')
+        st.markdown("**📊 Decision Tree Rules:**")
+
+        # Display tree rules - always visible
+        st.code(tree_rules, language='text')
 
         st.info("""
         **💡 Cara Membaca:**
