@@ -102,26 +102,30 @@ elif menu == "🔍 Prediksi":
 
     # Example buttons
     col1, col2, col3 = st.columns(3)
-    example_sms = None
+
+    # Initialize session state
+    if 'sms_text' not in st.session_state:
+        st.session_state.sms_text = ""
 
     with col1:
         if st.button("✅ Contoh HAM", use_container_width=True):
-            example_sms = "Halo kak, gimana kabarnya? Besok kita jadi ketemuan kan?"
+            st.session_state.sms_text = "Halo kak, gimana kabarnya? Besok kita jadi ketemuan kan?"
 
     with col2:
         if st.button("📢 Contoh PROMOSI", use_container_width=True):
-            example_sms = "Paket Flash 3GB hanya 20rb. Aktifkan di *363#"
+            st.session_state.sms_text = "Paket Flash 3GB hanya 20rb. Aktifkan di *363#"
 
     with col3:
         if st.button("🚨 Contoh SPAM", use_container_width=True):
-            example_sms = "GRATIS pulsa 100rb! Tekan *123# sekarang juga"
+            st.session_state.sms_text = "GRATIS pulsa 100rb! Tekan *123# sekarang juga"
 
     # Input
     sms_text = st.text_area(
         "Teks SMS",
-        value=example_sms if example_sms else "",
+        value=st.session_state.sms_text,
         height=150,
-        placeholder="Masukkan SMS yang ingin dianalisis..."
+        placeholder="Masukkan SMS yang ingin dianalisis...",
+        key="sms_input"
     )
 
     if create_prediction_button("🔮 Analisis SMS"):

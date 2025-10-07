@@ -88,34 +88,38 @@ elif menu == "🔍 Prediksi":
 
     # Example buttons
     col1, col2, col3, col4, col5 = st.columns(5)
-    example_review = None
+
+    # Initialize session state
+    if 'review_text' not in st.session_state:
+        st.session_state.review_text = ""
 
     with col1:
         if st.button("😊 Happy", use_container_width=True):
-            example_review = "Barang bagus banget! Seller ramah, pengiriman cepat. Sangat puas!"
+            st.session_state.review_text = "Barang bagus banget! Seller ramah, pengiriman cepat. Sangat puas!"
 
     with col2:
         if st.button("😢 Sad", use_container_width=True):
-            example_review = "Kecewa banget, barang tidak sesuai deskripsi."
+            st.session_state.review_text = "Kecewa banget, barang tidak sesuai deskripsi."
 
     with col3:
         if st.button("😠 Angry", use_container_width=True):
-            example_review = "Paket sudah diterima tapi rusak. Tolong dikembalikan uang saya!"
+            st.session_state.review_text = "Paket sudah diterima tapi rusak. Tolong dikembalikan uang saya!"
 
     with col4:
         if st.button("😨 Fear", use_container_width=True):
-            example_review = "Takut barang tidak sampai, tapi ternyata aman."
+            st.session_state.review_text = "Takut barang tidak sampai, tapi ternyata aman."
 
     with col5:
         if st.button("❤️ Love", use_container_width=True):
-            example_review = "Produk ini amazing! Saya suka sekali. Recommended!"
+            st.session_state.review_text = "Produk ini amazing! Saya suka sekali. Recommended!"
 
     # Input
     review_text = st.text_area(
         "Teks Review",
-        value=example_review if example_review else "",
+        value=st.session_state.review_text,
         height=150,
-        placeholder="Masukkan review produk..."
+        placeholder="Masukkan review produk...",
+        key="review_input"
     )
 
     if create_prediction_button("🔮 Analisis Emosi"):
