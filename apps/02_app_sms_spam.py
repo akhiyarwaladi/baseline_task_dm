@@ -82,20 +82,33 @@ if menu == "🏠 Home":
     - 🚨 **Spam (Phishing)** - Penipuan (20.9%)
     """)
 
-    st.subheader("🔍 Contoh SMS")
+    st.subheader("🔍 Contoh SMS per Kategori")
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.success("**✅ HAM**")
+        st.success("**✅ HAM (Normal)**")
+        st.caption("SMS personal dari teman/keluarga")
         st.write("_'Oke, nanti aku jemput jam 8 ya'_")
+        st.write("_'Udah makan belum? Mau makan bareng?'_")
+        st.write("_'Maaf telat bales, tadi lagi meeting'_")
+        st.write("_'Besok kita jadi ketemuan kan?'_")
 
     with col2:
-        st.info("**📢 PROMOSI**")
+        st.info("**📢 PROMOSI (Iklan)**")
+        st.caption("Marketing dari operator/brand resmi")
         st.write("_'Paket 10GB hanya 50rb. Hub *123#'_")
+        st.write("_'Flash Sale! Diskon 70% hari ini saja'_")
+        st.write("_'Promo kartu kredit cashback 20%'_")
+        st.write("_'Voucher belanja Rp100rb. Kode: PROMO123'_")
 
     with col3:
-        st.error("**🚨 SPAM**")
-        st.write("_'GRATIS pulsa 100rb! Klik link'_")
+        st.error("**🚨 SPAM (Phishing)**")
+        st.caption("Penipuan/phishing/scam")
+        st.write("_'GRATIS pulsa 100rb! Klik link bit.ly/xxx'_")
+        st.write("_'Anda menang undian 50 juta! Hub 08123456789'_")
+        st.write("_'Transfer sekarang atau rekening diblokir!'_")
+        st.write("_'Konfirmasi PIN ATM Anda ke nomor ini'_")
 
 # ============================================================================
 # PREDIKSI

@@ -85,6 +85,33 @@ if menu == "🏠 Home":
     - 😠 **Anger** - 12.9%
     """)
 
+    st.markdown("---")
+    st.subheader("📝 Contoh Review per Kategori Emosi")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.success("**😊 HAPPY (Senang/Puas)**")
+        st.write("_'Barang bagus banget! Seller ramah, pengiriman cepat. Sangat puas!'_")
+        st.write("_'Kualitas produk mantap, sesuai ekspektasi. Recommend!'_")
+
+        st.info("**😢 SADNESS (Sedih/Kecewa)**")
+        st.write("_'Kecewa banget, barang tidak sesuai deskripsi.'_")
+        st.write("_'Sayang sekali, warnanya beda dari foto. Mengecewakan.'_")
+
+        st.error("**😠 ANGER (Marah)**")
+        st.write("_'Paket sudah diterima tapi rusak. Tolong dikembalikan uang saya!'_")
+        st.write("_'Sangat mengecewakan! Barang palsu! Penjual tidak bertanggung jawab!'_")
+
+    with col2:
+        st.warning("**😨 FEAR (Takut/Khawatir)**")
+        st.write("_'Takut barang tidak sampai, tapi ternyata aman.'_")
+        st.write("_'Khawatir kualitasnya jelek, tapi untungnya bagus.'_")
+
+        st.markdown("**❤️ LOVE (Cinta/Sangat Suka)**")
+        st.write("_'Produk ini amazing! Saya suka sekali. Recommended!'_")
+        st.write("_'Love it! Bakal beli lagi. The best seller ever!'_")
+
 # PREDIKSI
 elif menu == "🔍 Prediksi":
     st.header("🔍 Deteksi Emosi Review")
