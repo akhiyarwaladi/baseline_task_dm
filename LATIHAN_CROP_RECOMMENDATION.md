@@ -3,10 +3,15 @@
 ## 📋 Deskripsi Dataset
 
 **Dataset:** Crop Recommendation Dataset
-**File:** `Crop_recommendation.csv`
+**File:** `dataset/06_crop_recommendation.csv` ✅ **SUDAH TERSEDIA**
+**Original File:** `Crop_recommendation.csv`
 **Samples:** 2,200 sampel pertanian
 **Source:** Kaggle - Crop Recommendation Dataset
 **Link:** https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset
+
+> ⚠️ **CATATAN PENTING:**
+> Dataset sudah didownload dan tersimpan di `dataset/06_crop_recommendation.csv`
+> Gunakan path ini dalam script/notebook Anda!
 
 ## 📊 Informasi Dataset
 
@@ -100,7 +105,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 # Load data
-df = pd.read_csv('Crop_recommendation.csv')
+# Dataset sudah tersedia di folder dataset/
+df = pd.read_csv('dataset/06_crop_recommendation.csv')
+# Atau jika Anda download sendiri dari Kaggle:
+# df = pd.read_csv('Crop_recommendation.csv')
 
 # TODO: Eksplorasi dataset
 # - Shape dan info
