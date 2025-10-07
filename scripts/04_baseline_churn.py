@@ -12,6 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
+import pickle
 import sys
 import os
 # Add parent directory to path to import utils
@@ -197,4 +198,28 @@ for idx in test_indices:
         print(f"  Tenure: {X_test.iloc[idx]['Tenure']:.0f} | "
               f"Complain: {X_test.iloc[idx]['Complain']:.0f} | "
               f"Satisfaction: {X_test.iloc[idx]['SatisfactionScore']:.0f}")
+
+# ============================================================================
+# SAVE MODELS
+# ============================================================================
+print_header("SAVE MODELS TO FILE", level=1)
+
+model_path = os.path.join(parent_dir, 'models', '04_model_churn.pkl')
+os.makedirs(os.path.join(parent_dir, 'models'), exist_ok=True)
+
+with open(model_path, 'wb') as f:
+    pickle.dump({
+        'model': knn,
+        'dt_model': dt,
+        'scaler': scaler,
+        'encoders': label_encoders,
+        'columns': X.columns,
+        'feature_names': list(X.columns)
+    }, f)
+
+print(f"✅ Saved models and preprocessors to: {model_path}")
+print(f"   - KNN (K=9, euclidean, distance weighted): Accuracy {knn_results['test_accuracy']:.4f}, ROC-AUC {roc_auc:.4f}")
+print(f"   - Decision Tree (depth=4): Accuracy {dt_results['test_accuracy']:.4f}")
+print(f"   - StandardScaler + {len(label_encoders)} LabelEncoders")
+print(f"   - Model size: {os.path.getsize(model_path) / 1024:.1f} KB")
 

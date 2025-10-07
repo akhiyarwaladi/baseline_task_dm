@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
+import pickle
 import sys
 import os
 # Add parent directory to path to import utils
@@ -96,3 +97,22 @@ for i, (sms, expected) in enumerate(test_sms, 1):
     print(f"\n{i}. {emoji} {label} ({confidence:.1%}) | Expected: {expected}")
     print(f'   "{sms[:70]}..."')
     print(f"   Proba: Ham={proba[0]:.1%}, Promo={proba[1]:.1%}, Spam={proba[2]:.1%}")
+
+# ============================================================================
+# SAVE MODEL
+# ============================================================================
+print_header("SAVE MODEL TO FILE", level=1)
+
+model_path = os.path.join(parent_dir, 'models', '02_model_sms_spam.pkl')
+os.makedirs(os.path.join(parent_dir, 'models'), exist_ok=True)
+
+with open(model_path, 'wb') as f:
+    pickle.dump({
+        'model': knn,
+        'vectorizer': vectorizer
+    }, f)
+
+print(f"✅ Saved KNN model and TF-IDF vectorizer to: {model_path}")
+print(f"   - KNN (K=5, cosine): Accuracy {results['test_accuracy']:.4f}")
+print(f"   - Vectorizer: max_features=500, ngram_range=(1,2)")
+print(f"   - Model size: {os.path.getsize(model_path) / 1024:.1f} KB")

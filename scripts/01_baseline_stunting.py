@@ -12,6 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
+import pickle
 import sys
 import os
 # Add parent directory to path to import utils
@@ -137,3 +138,24 @@ print(f"{'Decision Tree':<20} {dt_results['test_accuracy']:.4f}       {dt_result
 
 best_model = "KNN" if knn_results['test_accuracy'] > dt_results['test_accuracy'] else "Decision Tree"
 print(f"\nBest Model: {best_model}")
+
+# ============================================================================
+# SAVE MODELS
+# ============================================================================
+print_header("SAVE MODELS TO FILE", level=1)
+
+model_path = os.path.join(parent_dir, 'models', '01_model_stunting.pkl')
+os.makedirs(os.path.join(parent_dir, 'models'), exist_ok=True)
+
+with open(model_path, 'wb') as f:
+    pickle.dump({
+        'model': knn,
+        'dt_model': dt,
+        'columns': X.columns,
+        'feature_names': list(X.columns)
+    }, f)
+
+print(f"✅ Saved both KNN and Decision Tree models to: {model_path}")
+print(f"   - KNN (K=5): Accuracy {knn_results['test_accuracy']:.4f}")
+print(f"   - Decision Tree (depth=3): Accuracy {dt_results['test_accuracy']:.4f}")
+print(f"   - Model size: {os.path.getsize(model_path) / 1024:.1f} KB")
