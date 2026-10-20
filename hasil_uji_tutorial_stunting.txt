@@ -1,0 +1,161 @@
+TAHAP 1 | Library siap.
+TAHAP 2 | Baris: 120999 | Kolom: 4
+ Umur (bulan) Jenis Kelamin  Tinggi Badan (cm)      Status Gizi
+            0     laki-laki          44.591973          stunted
+            0     laki-laki          56.705203           tinggi
+            0     laki-laki          46.863358           normal
+            0     laki-laki          47.508026           normal
+            0     laki-laki          42.743494 severely stunted
+
+Tipe setiap kolom:
+Umur (bulan)           int64
+Jenis Kelamin         object
+Tinggi Badan (cm)    float64
+Status Gizi           object
+dtype: object
+
+Jumlah nilai kosong per kolom:
+Umur (bulan)         0
+Jenis Kelamin        0
+Tinggi Badan (cm)    0
+Status Gizi          0
+dtype: int64
+Jumlah duplikat: 81574
+TAHAP 3 | Baris kosong yang dibuang: 0
+Baris duplikat yang dibuang: 81574
+Jumlah baris bersih: 39425
+
+Jumlah baris per Status Gizi:
+Status Gizi
+normal              21514
+tinggi               6974
+severely stunted     6520
+stunted              4417
+Name: count, dtype: int64
+TAHAP 4 | X = tiga kolom input:
+ Umur (bulan)  Jenis Kelamin  Tinggi Badan (cm)
+            0              0          44.591973
+            0              0          56.705203
+            0              0          46.863358
+            0              0          47.508026
+            0              0          42.743494
+
+y = label untuk setiap baris X:
+         stunted
+          tinggi
+          normal
+          normal
+severely stunted
+TAHAP 5 | Jumlah TRAINING: 31540
+Jumlah TESTING: 7885
+
+Proporsi kelas (%):
+                  Training  Testing
+Status Gizi                        
+normal               54.57    54.57
+tinggi               17.69    17.69
+severely stunted     16.54    16.54
+stunted              11.20    11.20
+TAHAP 6 | Model utama selesai dilatih.
+max_depth: 3 | criterion: gini
+min_samples_split: 2 | min_samples_leaf: 1
+Kedalaman sebenarnya: 3 | Jumlah daun: 8
+TAHAP 7 | Akurasi TRAINING: 60.29%
+Akurasi TESTING: 60.10%
+Prediksi testing benar: 4739 dari 7885
+Jika selalu menebak 'normal': 54.57%
+
+Laporan per kelas pada TESTING:
+                  precision    recall  f1-score   support
+
+          normal       0.59      0.98      0.74      4303
+severely stunted       0.83      0.15      0.25      1304
+         stunted       0.45      0.13      0.20       883
+          tinggi       0.79      0.15      0.25      1395
+
+        accuracy                           0.60      7885
+       macro avg       0.67      0.35      0.36      7885
+    weighted avg       0.65      0.60      0.51      7885
+
+Confusion matrix TESTING:
+Prediksi          normal  severely stunted  stunted  tinggi
+Asli                                                       
+normal              4221                 0       25      57
+severely stunted     999               193      112       0
+stunted              731                39      113       0
+tinggi              1183                 0        0     212
+
+Lima contoh testing (jenis kelamin: 0=laki-laki, 1=perempuan):
+ Umur (bulan)  Jenis Kelamin  Tinggi Badan (cm)             Asli Prediksi
+            1              0          69.641642           tinggi   normal
+           60              0         109.800000           normal   normal
+           37              1          80.800000 severely stunted   normal
+           38              0          98.700000           normal   normal
+           21              0          87.500000           normal   normal
+TAHAP 8 | Kedalaman model: 3 | Tampilan hingga: 3
+Urutan kelas pada value: ['normal', 'severely stunted', 'stunted', 'tinggi']
+Baca dari akar: <= ke kiri, > ke kanan, lalu lihat class pada daun.
+Bobot penggunaan fitur (0 berarti tidak dipakai model ini):
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:251: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+Umur (bulan)         0.304
+Jenis Kelamin        0.000
+Tinggi Badan (cm)    0.696
+dtype: float64
+TAHAP 9 | Mulai perbandingan max_depth. Tunggu sampai semua kedalaman selesai.
+Urutan kelas pada value: ['normal', 'severely stunted', 'stunted', 'tinggi']
+
+Mencoba max_depth=3 ...
+Training=60.29% | Testing=60.10% | Daun=8
+Menyimpan pohon lengkap ke SVG; pohon besar memerlukan waktu lebih lama.
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:344: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+Pohon LENGKAP tersimpan di: gambar_decision_tree\pohon_max_depth_3.svg
+
+Mencoba max_depth=5 ...
+Training=69.04% | Testing=68.10% | Daun=32
+Menyimpan pohon lengkap ke SVG; pohon besar memerlukan waktu lebih lama.
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:344: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+max_depth=5: gambar di atas adalah cuplikan; (...) berarti ada cabang lanjutan.
+Pohon LENGKAP tersimpan di: gambar_decision_tree\pohon_max_depth_5.svg
+
+Mencoba max_depth=8 ...
+Training=83.82% | Testing=82.83% | Daun=181
+Menyimpan pohon lengkap ke SVG; pohon besar memerlukan waktu lebih lama.
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:344: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+max_depth=8: gambar di atas adalah cuplikan; (...) berarti ada cabang lanjutan.
+Pohon LENGKAP tersimpan di: gambar_decision_tree\pohon_max_depth_8.svg
+
+Mencoba max_depth=12 ...
+Training=96.98% | Testing=95.89% | Daun=643
+Menyimpan pohon lengkap ke SVG; pohon besar memerlukan waktu lebih lama.
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:344: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+max_depth=12: gambar di atas adalah cuplikan; (...) berarti ada cabang lanjutan.
+Pohon LENGKAP tersimpan di: gambar_decision_tree\pohon_max_depth_12.svg
+
+TAHAP 9 | Hasil perbandingan max_depth dengan TRAINING/TESTING yang sama:
+ max_depth  Training (%)  Testing (%)  Selisih (poin %)  Jumlah daun
+         3         60.29        60.10              0.19            8
+         5         69.04        68.10              0.93           32
+         8         83.82        82.83              1.00          181
+        12         96.98        95.89              1.08          643
+C:\Users\MyPC PRO\Documents\baseline_task_dm\tutorial_decision_tree_stunting.py:365: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+TAHAP 10 | Parameter lain dengan max_depth tetap 8:
+             Percobaan criterion  min_samples_split  min_samples_leaf  Training (%)  Testing (%)  Jumlah daun
+                 Acuan      gini                  2                 1         83.82        82.83          181
+        Ubah criterion   entropy                  2                 1         88.26        87.14          164
+Ubah min_samples_split      gini                200                 1         82.40        81.41           97
+ Ubah min_samples_leaf      gini                  2                50         83.11        81.98          120
+TAHAP 11 | Contoh training (0=laki-laki, 1=perempuan):
+ Umur (bulan)  Jenis Kelamin  Tinggi Badan (cm)
+           56              1               99.7
+Status Gizi asli contoh ini: normal
+TAHAP 12 | Umur (bulan): 56
+Jenis kelamin (0=laki-laki, 1=perempuan): 1
+Tinggi (cm): 99.7
+TAHAP 13 | Model utama yang dipakai: max_depth = 3 | criterion = gini
+Hasil prediksi Status Gizi: normal
